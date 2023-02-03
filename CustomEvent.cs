@@ -176,49 +176,34 @@ public class Logger
 
     public Logger()
     {
-        ExceptionSkeleton(Read);
-        ExceptionSkeleton(Write);
+        
     }
-
-    void Initialize()
-    {
-        reader = new StreamReader(filePath);
-        writer = new StreamWriter(filePath);
-        builder = new StringBuilder();
-    }
-
-    void ExceptionSkeleton(Action action)
-    {
-        try
-        {
-            action();
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine("Exception: " + e.Message);
-        }
-        finally
-        {
-            Console.WriteLine("Executing finally block.");
-        }
-    }
-
     public void Read()
     {
-        string line = String.Empty;
-        line = reader.ReadLine();
-        while(line != null)
+        using (StreamReader reader = new StreamReader(filePath))
         {
-            WriteLine(line);
-            line = reader.ReadLine();
+            try
+            {
+                string line = String.Empty;
+                line = reader.ReadLine()!;
+                while (line != null)
+                {
+                    WriteLine(line);
+                    line = reader.ReadLine()!;
+                }
+                reader.Close();
+            }
+            catch (Exception e) { WriteLine("Exception: " + e.Message); }
+            finally { WriteLine("Executing finally block."); }
         }
-        reader.Close();
     }
-    
-    public void Write()
+
+    public void Write(StringBuilder builder)
     {
-        writer.WriteLine("Hello world");
-        /// 여기에 writer.WriteLin()으로 뭘 써야해
-        writer.Close();
+        using(StreamWriter writer = new StreamWriter(filePath, true, Encoding.Unicode))
+        {
+            WriteLine(builder.ToString());
+        }
     }
+    private string NowTime() => DateTime.Now.ToString("yyyy/MM/dd/hh/ss");
 }
