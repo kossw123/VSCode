@@ -1,0 +1,15 @@
+D:\최상위 루트 코드파일\repos\VSCode\bin\Debug\net6.0\VSCode.exe
+D:\최상위 루트 코드파일\repos\VSCode\bin\Debug\net6.0\VSCode.deps.json
+D:\최상위 루트 코드파일\repos\VSCode\bin\Debug\net6.0\VSCode.runtimeconfig.json
+D:\최상위 루트 코드파일\repos\VSCode\bin\Debug\net6.0\VSCode.dll
+D:\최상위 루트 코드파일\repos\VSCode\bin\Debug\net6.0\VSCode.pdb
+D:\최상위 루트 코드파일\repos\VSCode\obj\Debug\net6.0\VSCode.csproj.AssemblyReference.cache
+D:\최상위 루트 코드파일\repos\VSCode\obj\Debug\net6.0\VSCode.GeneratedMSBuildEditorConfig.editorconfig
+D:\최상위 루트 코드파일\repos\VSCode\obj\Debug\net6.0\VSCode.AssemblyInfoInputs.cache
+D:\최상위 루트 코드파일\repos\VSCode\obj\Debug\net6.0\VSCode.AssemblyInfo.cs
+D:\최상위 루트 코드파일\repos\VSCode\obj\Debug\net6.0\VSCode.csproj.CoreCompileInputs.cache
+D:\최상위 루트 코드파일\repos\VSCode\obj\Debug\net6.0\VSCode.dll
+D:\최상위 루트 코드파일\repos\VSCode\obj\Debug\net6.0\refint\VSCode.dll
+D:\최상위 루트 코드파일\repos\VSCode\obj\Debug\net6.0\VSCode.pdb
+D:\최상위 루트 코드파일\repos\VSCode\obj\Debug\net6.0\VSCode.genruntimeconfig.cache
+D:\최상위 루트 코드파일\repos\VSCode\obj\Debug\net6.0\ref\VSCode.dll
