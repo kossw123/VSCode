@@ -1,30 +1,15 @@
+using System.Text;
+using System.IO;
 using static System.Console;
 
-MainClass<int> main = new MainClass<int>(123123);
+//MainClass<int> main = new MainClass<int>(123123);
 
+Logger logger = new Logger();
 
 public class MainClass<T>
 {
-    Compound<T> compound;
-    public MainClass(T input)
-    {
-        compound =  new Compound<T>(input);
-        Callback(this, compound.state);
-    }
-
-    
-    public void Callback(object sender, EventArgs e)
-    {
-        compound.OnAddresssFunction((sender, e) => 
-        { 
-            WriteLine("asdasdas");
-        });
-
-        compound.OnCallBehaviour();
-    }
+    List<Compound<T>> compoundList = new List<Compound<T>>();
 }
-
-
 public class State<T> : EventArgs
 {
     public enum FlagState
@@ -49,24 +34,33 @@ public class State<T> : EventArgs
         }
         set
         {
-            data = value ?? throw new Exception(nameof(value));
+            data = value switch
+            {
+                FlagState.None              => default(T)!,
+                FlagState.Validate          => value,
+                FlagState.InValidate        => throw new Exception(nameof(value)),
+                _                           => throw new Exception(nameof(value))
+            };
         }
     }
 
     public State(T input) => this.data = input;
-
     public static implicit operator State<T>(T value) => new State<T>(value);
     public static implicit operator T(State<T> value) => value.Data is not null ? (T)Convert.ChangeType(value.Data, typeof(T)) : throw new Exception(nameof(value));
+
+    public int GetValidateCount() => validateCount;
+    public FlagState GetCurrentFlag() => flag;
 }
 public class Behaviour
 {
+    
     public event EventHandler<EventArgs> behaviour;
+
     public void AddBehaviour(Action<object, EventArgs> e)
     {
         if(e is not null)
         {
-            Action<object, EventArgs> temp = e.Invoke;
-            EventHandler<EventArgs> h = temp.Invoke!;
+            EventHandler<EventArgs> h = e.Invoke!;
             behaviour += h;
         }
         else
@@ -84,22 +78,46 @@ public class Behaviour
         }
     }
 }
+public class CustomBehaviour
+{
+    public delegate void CustomEventHandler(object sender, EventArgs e);
+    public event CustomEventHandler? customHandler;
+    public void AddBehaviour(Action<object, EventArgs> e)
+    {
+        if(e is not null)
+        {
+            CustomEventHandler temp = e.Invoke!;
+            customHandler += temp;
+        }
+        else
+        {
+            throw new Exception(nameof(e));
+        }
+    }
+
+    public void CallBehaviour(EventArgs e)
+    {
+        if(e is not null && customHandler is not null)
+        {
+            CustomEventHandler temp = customHandler;
+            temp?.Invoke(this, e);
+        }
+    }
+}
 public class Compound<T>
 {
     public State<T> state { get; private set;}
-    public Behaviour behaviour { get; private set;}
+    public static Behaviour behaviour { get; private set;}
+    public static CustomBehaviour customBehaviour { get; private set; }
 
+    static Compound()
+    {
+        behaviour = new Behaviour();
+        customBehaviour = new CustomBehaviour();
+    }
     public Compound(T input)
     {
         state = new State<T>(input);
-        behaviour = new Behaviour();
-
-        initialize();
-    }
-
-    void initialize()
-    {
-
     }
 
     public void OnAddresssFunction(Action<object, EventArgs> e)
@@ -110,5 +128,97 @@ public class Compound<T>
     public void OnCallBehaviour()
     {
         behaviour.CallBehaviour(state);
+    }
+
+    public void OnAddresssCustomFunction(Action<object, EventArgs> e)
+    {
+        customBehaviour.AddBehaviour(e);
+    }
+
+    public void OnCallCustomBehaviour()
+    {
+        customBehaviour.CallBehaviour(state);
+    }
+}
+
+
+
+
+/// 파일명, 경로, 함수명, 라인 넘버등 로깅 이벤트 발생시점의 정보가 자세하게 담겨 있어야 한다.
+/// 파일명?     따로 저장안하는데
+/// 경로?       마찬가지
+/// 함수명?     이건 등록해야겠다.
+/// 시간?       이것도
+/// 라인넘버?   이것도
+
+/// 근데 어디에다가 등록해서 가지고 있을까?
+public class Logger
+{
+    #region Logger Components
+    public struct Component
+    {
+        public string MethodName = string.Empty;
+        public DateTime InvokeTime = DateTime.MinValue;
+        public int LineNumber = 0;
+        public Component() {}
+    };
+    List<Component> components = new List<Component>();    
+    #endregion
+    
+#region Configuration
+    public readonly string fileName;
+    public readonly string filePath = @"D:\최상위 루트 코드파일\repos\VSCode\Sample.txt" ;
+    StreamReader reader;
+    StreamWriter writer;
+    StringBuilder builder;
+#endregion
+
+
+    public Logger()
+    {
+        ExceptionSkeleton(Read);
+        ExceptionSkeleton(Write);
+    }
+
+    void Initialize()
+    {
+        reader = new StreamReader(filePath);
+        writer = new StreamWriter(filePath);
+        builder = new StringBuilder();
+    }
+
+    void ExceptionSkeleton(Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Exception: " + e.Message);
+        }
+        finally
+        {
+            Console.WriteLine("Executing finally block.");
+        }
+    }
+
+    public void Read()
+    {
+        string line = String.Empty;
+        line = reader.ReadLine();
+        while(line != null)
+        {
+            WriteLine(line);
+            line = reader.ReadLine();
+        }
+        reader.Close();
+    }
+    
+    public void Write()
+    {
+        writer.WriteLine("Hello world");
+        /// 여기에 writer.WriteLin()으로 뭘 써야해
+        writer.Close();
     }
 }
