@@ -166,16 +166,34 @@ public class Logger
     #endregion
     
 #region Configuration
-    public readonly string fileName;
     public readonly string filePath = @"D:\최상위 루트 코드파일\repos\VSCode\Sample.txt" ;
     StreamReader reader;
     StreamWriter writer;
-    StringBuilder builder;
 #endregion
 
 
-    public Logger()
+    /// Component 추가
+    public void Add()
     {
+        components.Add(Configuration());
+    }
+
+    /// Report가 추가된 Component 생성
+    public Component Configuration()
+    {
+        
+        return new Component();
+    }   
+
+    /// Report 작성
+    /// 양식 정할것
+    public StringBuilder Report()
+    {
+        StringBuilder builder = new StringBuilder();
+        
+        
+
+        return builder;
         
     }
     public void Read()
