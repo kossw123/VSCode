@@ -45,6 +45,8 @@ public class State<T> : EventArgs
     }
 
     public State(T input) => this.data = input;
+    public State() : this(new )
+    /// 이런식으로 할거면 생성자에서 형변환을 미리 알려줘야 한다.
     public static implicit operator State<T>(T value) => new State<T>(value);
     public static implicit operator T(State<T> value) => value.Data is not null ? (T)Convert.ChangeType(value.Data, typeof(T)) : throw new Exception(nameof(value));
 
@@ -107,6 +109,7 @@ public class CustomBehaviour
 public class Compound<T>
 {
     public State<T> state { get; private set;}
+    /// static delete
     public static Behaviour behaviour { get; private set;}
     public static CustomBehaviour customBehaviour { get; private set; }
 
@@ -149,7 +152,7 @@ public class Compound<T>
 /// 경로?       마찬가지
 /// 함수명?     이건 등록해야겠다.
 /// 시간?       이것도
-/// 라인넘버?   이것도
+/// 라인넘버?   이것도  
 
 /// 근데 어디에다가 등록해서 가지고 있을까?
 public class Logger
@@ -160,7 +163,13 @@ public class Logger
         public string MethodName = string.Empty;
         public DateTime InvokeTime = DateTime.MinValue;
         public int LineNumber = 0;
-        public Component() {}
+
+        /// Compound의 event 감지가 필요
+        public Compound<T> target;
+        public Component(Compound<T> target) 
+        {
+            this.target = target;
+        }
     };
     List<Component> components = new List<Component>();    
     #endregion
@@ -173,6 +182,7 @@ public class Logger
 
 
     /// Component 추가
+    /// Task 사용하여 실행 도중에 추가가 진행될 수 있게끔 Thread를 조절
     public void Add()
     {
         components.Add(Configuration());
@@ -187,6 +197,7 @@ public class Logger
 
     /// Report 작성
     /// 양식 정할것
+    /// Component parameter add
     public StringBuilder Report()
     {
         StringBuilder builder = new StringBuilder();
@@ -196,6 +207,8 @@ public class Logger
         return builder;
         
     }
+
+    /// 가장 중요한 logger file 생성을 안함
     public void Read()
     {
         using (StreamReader reader = new StreamReader(filePath))
