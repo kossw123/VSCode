@@ -17,7 +17,7 @@ Operation<int> co = new Operation<int>(123123);
 // WriteLine(state2);
 // WriteLine(i);
 
-
+S
 public class Operation<T>
 {
     T input;
