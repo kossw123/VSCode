@@ -1,10 +1,32 @@
 using System.Text;
 using System.IO;
 using static System.Console;
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Running;
 
 //MainClass<int> main = new MainClass<int>(123123);
 
 Logger logger = new Logger();
+
+Operation<int> co = new Operation<int>(123123);
+
+// State<int> state = 1;
+// State<int> state2 = state;
+// int i = state;
+// WriteLine(state);
+// WriteLine(state2);
+// WriteLine(i);
+
+
+public class Operation<T>
+{
+    T input;
+    public Operation(T input)
+    {
+        this.input = input;
+    }
+}
+
 
 public class MainClass<T>
 {
@@ -45,10 +67,31 @@ public class State<T> : EventArgs
     }
 
     public State(T input) => this.data = input;
-    public State() : this(new )
+
     /// 이런식으로 할거면 생성자에서 형변환을 미리 알려줘야 한다.
+    /// 근데 generic도 해당이 되나?
+    /// 이 코드는 opeator overloading이 먼저 실행되고 그 다음 실행된다.
+    /// public static implicit operator T(State<T> value) => value.Data is not null ? (T)Convert.ChangeType(value.Data, typeof(T)) : throw new Exception(nameof(value));
+    public State() : this(new State<T>())
+    {
+
+    }
+    
+    /// 아래 코드는 사용자 정의 암시적 변환 연산자다.
+    /// T = State<T> 일때 State<T>.Data를 T에 넣는다.
+    /// State<T> = T 일때 new State<T>(value)를 생성한다.
+    //public static implicit operator T(State<T> value) => value.Data is not null ? (T)Convert.ChangeType(value.Data, typeof(T)) : throw new Exception(nameof(value));
     public static implicit operator State<T>(T value) => new State<T>(value);
-    public static implicit operator T(State<T> value) => value.Data is not null ? (T)Convert.ChangeType(value.Data, typeof(T)) : throw new Exception(nameof(value));
+    /// (T)Convert.ChangeType(value.Data, typeof(T))를 써야하는 이유
+    /// 기본 데이터 형식을 다른 데이터 형식으로 변환 
+    /// 5가지 결과중 하나를 생성한다.
+    /// 1. 변환이 없는 경우 => 원래 형식의 인스턴스만 반환 
+    /// 2. 변환이 실패한 경우 => throw Exception
+    /// 3. 변환이 성공한 경우 => 변환된 인스턴스 반환 
+    /// 4. overflow
+    /// 5. formatException
+    /// Constructor에서 T 타입의 param을 넣었는데, 굳이 Convert.ChangeType에서 throw Exception을 할 이유?
+    public static implicit operator T(State<T> value) => value.Data is not null ? value.Data : throw new Exception(nameof(value));
 
     public int GetValidateCount() => validateCount;
     public FlagState GetCurrentFlag() => flag;
@@ -165,11 +208,12 @@ public class Logger
         public int LineNumber = 0;
 
         /// Compound의 event 감지가 필요
-        public Compound<T> target;
-        public Component(Compound<T> target) 
-        {
-            this.target = target;
-        }
+        // public Compound<T> target;
+        // public Component(Compound<T> target) 
+        // {
+        //     this.target = target;
+        // }
+        public Component() { }
     };
     List<Component> components = new List<Component>();    
     #endregion
