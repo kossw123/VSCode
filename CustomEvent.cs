@@ -1,19 +1,8 @@
 using System.Text;
-using System.IO;
 using static System.Console;
-using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
 
 //MainClass<int> main = new MainClass<int>(123123);
-
-Logger logger = new Logger();
-
-// State<int> state = 1;
-// State<int> state2 = state;
-// int i = state;
-// WriteLine(state);
-// WriteLine(state2);
-// WriteLine(i);
+//Logger logger = new Logger();
 
 public class MainClass<T>
 {
@@ -106,43 +95,15 @@ public class Behaviour
         }
     }
 }
-public class CustomBehaviour
-{
-    public delegate void CustomEventHandler(object sender, EventArgs e);
-    public event CustomEventHandler? customHandler;
-    public void AddBehaviour(Action<object, EventArgs> e)
-    {
-        if(e is not null)
-        {
-            CustomEventHandler temp = e.Invoke!;
-            customHandler += temp;
-        }
-        else
-        {
-            throw new Exception(nameof(e));
-        }
-    }
-
-    public void CallBehaviour(EventArgs e)
-    {
-        if(e is not null && customHandler is not null)
-        {
-            CustomEventHandler temp = customHandler;
-            temp?.Invoke(this, e);
-        }
-    }
-}
 public class Compound<T>
 {
     public State<T> state { get; private set;}
     /// static delete
     public static Behaviour behaviour { get; private set;}
-    public static CustomBehaviour customBehaviour { get; private set; }
 
     static Compound()
     {
         behaviour = new Behaviour();
-        customBehaviour = new CustomBehaviour();
     }
     public Compound(T input)
     {
@@ -158,16 +119,6 @@ public class Compound<T>
     {
         behaviour.CallBehaviour(state);
     }
-
-    public void OnAddresssCustomFunction(Action<object, EventArgs> e)
-    {
-        customBehaviour.AddBehaviour(e);
-    }
-
-    public void OnCallCustomBehaviour()
-    {
-        customBehaviour.CallBehaviour(state);
-    }
 }
 
 
@@ -179,47 +130,45 @@ public class Compound<T>
 /// 함수명?     이건 등록해야겠다.
 /// 시간?       이것도
 /// 라인넘버?   이것도  
-
-/// 근데 어디에다가 등록해서 가지고 있을까?
-public class Logger
+public class Logger<T>
 {
-    #region Logger Components
-    public struct Component
+    #region Logger Configuration Components
+    public struct Component<T>
     {
         public string MethodName = string.Empty;
         public DateTime InvokeTime = DateTime.MinValue;
         public int LineNumber = 0;
 
         /// Compound의 event 감지가 필요
-        // public Compound<T> target;
-        // public Component(Compound<T> target) 
-        // {
-        //     this.target = target;
-        // }
-        public Component() { }
+        public Compound<T> target;
+        public Component(Compound<T> target) 
+        {
+            this.target = target;
+        }
+        public Component(T input)
+        { 
+            target = new Compound<T>(input);
+        }
     };
-    List<Component> components = new List<Component>();    
+    List<Component<T>> components = new List<Component<T>>();    
     #endregion
     
-#region Configuration
-    public readonly string filePath = @"D:\최상위 루트 코드파일\repos\VSCode\Sample.txt" ;
-    StreamReader reader;
-    StreamWriter writer;
-#endregion
+    LoggerStream loggerStream = new LoggerStream(
+        folderPath: @"D:\최상위 루트 코드파일\repos\VSCode\",
+        folderName: @"LoggerStream",
+        fileName: "Sample",
+        fileForm: FileForm.TXT);
 
 
     /// Component 추가
     /// Task 사용하여 실행 도중에 추가가 진행될 수 있게끔 Thread를 조절
-    public void Add()
-    {
-        components.Add(Configuration());
-    }
+    public void Add() => components.Add(Configuration());
 
     /// Report가 추가된 Component 생성
-    public Component Configuration()
+    public Component<T> Configuration()
     {
         
-        return new Component();
+        return new Component<T>();
     }   
 
     /// Report 작성
@@ -237,16 +186,9 @@ public class Logger
         return builder;
     }
 
-
-    public void Create()
-    {
-        FileStream fileStream = File.Create(fullPath);
-        fileStream.Close();
-    }
-
     public void Read()
     {
-        using (StreamReader reader = new StreamReader(filePath))
+        using (StreamReader reader = new StreamReader(loggerStream.file_FullPath))
         {
             try
             {
@@ -266,10 +208,73 @@ public class Logger
 
     public void Write(StringBuilder builder)
     {
-        using(StreamWriter writer = new StreamWriter(filePath, true, Encoding.Unicode))
+        if (!Directory.Exists(loggerStream.folder_FullPath))
+        {
+            loggerStream.CreateFolder();
+            if (!File.Exists(loggerStream.file_FullPath))
+            {
+                loggerStream.CreateFile();
+            }
+        }
+
+        using (StreamWriter writer = new StreamWriter(loggerStream.file_FullPath, 
+                                        true, 
+                                        Encoding.Unicode))        
         {
             WriteLine(builder.ToString());
         }
     }
-    private string NowTime() => DateTime.Now.ToString("yyyy/MM/dd/hh/ss");
+}
+public enum FileForm
+{
+    NONE = 0,
+    TXT = 1
+}
+public class LoggerStream
+{
+    private string folderPath = String.Empty;
+    private string folderName = String.Empty;
+    public string folder_FullPath { get; private set; }
+
+    private string filePath = String.Empty;
+    private string fileName = String.Empty;
+    private FileForm fileForm = FileForm.NONE;
+    public string file_FullPath { get; private set; }
+
+    public LoggerStream(string folderPath, string folderName, string fileName, FileForm fileForm)
+    {
+        this.folderPath = folderPath;
+        this.folderName = folderName;
+        
+        this.fileName = fileName;
+        this.fileForm = fileForm;
+
+        CompletePaths(fileForm);
+    }
+    internal void CompletePaths(FileForm form)
+    {
+        folder_FullPath = CombinePaths(folderPath, folderName);
+        filePath = CombinePaths(folder_FullPath, fileName);
+        file_FullPath = filePath + ReturnForm(form);
+    }
+    internal string CombinePaths(string pre, string post)
+    {
+        return Path.Combine(pre, post);
+    }
+    internal string ReturnForm(FileForm target) => target switch
+    {
+        FileForm.TXT => @".txt",
+        _ => throw new Exception()
+    };
+
+
+    public void CreateFile()
+    {
+        FileStream fileStream = File.Create(file_FullPath);
+        fileStream.Close();
+    }
+    public void CreateFolder()
+    {
+        Directory.CreateDirectory(folder_FullPath);
+    }
 }
