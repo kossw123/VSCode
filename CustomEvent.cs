@@ -8,25 +8,12 @@ using BenchmarkDotNet.Running;
 
 Logger logger = new Logger();
 
-Operation<int> co = new Operation<int>(123123);
-
 // State<int> state = 1;
 // State<int> state2 = state;
 // int i = state;
 // WriteLine(state);
 // WriteLine(state2);
 // WriteLine(i);
-
-S
-public class Operation<T>
-{
-    T input;
-    public Operation(T input)
-    {
-        this.input = input;
-    }
-}
-
 
 public class MainClass<T>
 {
@@ -72,10 +59,7 @@ public class State<T> : EventArgs
     /// 근데 generic도 해당이 되나?
     /// 이 코드는 opeator overloading이 먼저 실행되고 그 다음 실행된다.
     /// public static implicit operator T(State<T> value) => value.Data is not null ? (T)Convert.ChangeType(value.Data, typeof(T)) : throw new Exception(nameof(value));
-    public State() : this(new State<T>())
-    {
-
-    }
+    /// 역참조를 막아야 한다.
     
     /// 아래 코드는 사용자 정의 암시적 변환 연산자다.
     /// T = State<T> 일때 State<T>.Data를 T에 넣는다.
@@ -92,7 +76,6 @@ public class State<T> : EventArgs
     /// 5. formatException
     /// Constructor에서 T 타입의 param을 넣었는데, 굳이 Convert.ChangeType에서 throw Exception을 할 이유?
     public static implicit operator T(State<T> value) => value.Data is not null ? value.Data : throw new Exception(nameof(value));
-
     public int GetValidateCount() => validateCount;
     public FlagState GetCurrentFlag() => flag;
 }
@@ -242,17 +225,25 @@ public class Logger
     /// Report 작성
     /// 양식 정할것
     /// Component parameter add
-    public StringBuilder Report()
+    public StringBuilder Report(string _classInfo, string _methodInfo, string _componentInfo)
     {
         StringBuilder builder = new StringBuilder();
-        
-        
+        string format = "\n" +
+            "ClassName : {0}\n" +
+            "└─ MethodName : {1}\n" +
+            "└─ Component : {2}\n";
 
+        builder.AppendFormat(format, _classInfo, _methodInfo, _componentInfo);
         return builder;
-        
     }
 
-    /// 가장 중요한 logger file 생성을 안함
+
+    public void Create()
+    {
+        FileStream fileStream = File.Create(fullPath);
+        fileStream.Close();
+    }
+
     public void Read()
     {
         using (StreamReader reader = new StreamReader(filePath))
