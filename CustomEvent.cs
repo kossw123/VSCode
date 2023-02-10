@@ -8,6 +8,7 @@ public class MainClass<T>
 {
     List<Compound<T>> compoundList = new List<Compound<T>>();
 }
+
 public class State<T> : EventArgs
 {
     public enum FlagState
@@ -70,7 +71,6 @@ public class State<T> : EventArgs
 }
 public class Behaviour
 {
-    
     public event EventHandler<EventArgs> behaviour;
 
     public void AddBehaviour(Action<object, EventArgs> e)
@@ -97,32 +97,56 @@ public class Behaviour
 }
 public class Compound<T>
 {
-    public State<T> state { get; private set;}
-    /// static delete
-    public static Behaviour behaviour { get; private set;}
-
-    static Compound()
-    {
-        behaviour = new Behaviour();
-    }
+    public State<T> state { get; private set; }
+    public Behaviour behaviour { get; private set; }
     public Compound(T input)
     {
         state = new State<T>(input);
+        behaviour = new Behaviour();
     }
-
-    public void OnAddresssFunction(Action<object, EventArgs> e)
-    {
-        behaviour.AddBehaviour(e);
-    }
-
-    public void OnCallBehaviour()
-    {
-        behaviour.CallBehaviour(state);
-    }
+    public void OnCallBehaviour() => behaviour.CallBehaviour(state);
 }
 
 
 
+#region 수정할 부분
+/*
+    issue
+        1. State + Behaviour = Compound
+        2. Compound + Logger = Component
+
+        == 언제까지 Wrapper Class를 만들어야 하는가?
+        == 어디서 Event를 등록해야 하는가?
+        == Logger에 필요하면 Fields들은 어디서 받아오는가?
+*/
+
+public class Component<T>
+{
+    public Compound<T> compound;
+    public Component(T input)
+    {
+        compound = new Compound<T>(input);
+    }
+    public List<Component<T>> components = new List<Component<T>>();
+    Logger logger = new Logger();
+
+    public void Report()
+    {
+            
+    }
+
+    public void Detect(object sender, EventArgs e)
+    {
+
+    }
+    public StringBuilder Report(Compound<T> compound)
+    {
+        return null;
+    }
+
+}
+
+#endregion
 
 /// 파일명, 경로, 함수명, 라인 넘버등 로깅 이벤트 발생시점의 정보가 자세하게 담겨 있어야 한다.
 /// 파일명?     따로 저장안하는데
@@ -130,46 +154,15 @@ public class Compound<T>
 /// 함수명?     이건 등록해야겠다.
 /// 시간?       이것도
 /// 라인넘버?   이것도  
-public class Logger<T>
-{
-    #region Logger Configuration Components
-    public struct Component<T>
-    {
-        public string MethodName = string.Empty;
-        public DateTime InvokeTime = DateTime.MinValue;
-        public int LineNumber = 0;
 
-        /// Compound의 event 감지가 필요
-        public Compound<T> target;
-        public Component(Compound<T> target) 
-        {
-            this.target = target;
-        }
-        public Component(T input)
-        { 
-            target = new Compound<T>(input);
-        }
-    };
-    List<Component<T>> components = new List<Component<T>>();    
-    #endregion
-    
+#region IO, Logger Stream
+public class Logger
+{
     LoggerStream loggerStream = new LoggerStream(
         folderPath: @"D:\최상위 루트 코드파일\repos\VSCode\",
         folderName: @"LoggerStream",
         fileName: "Sample",
         fileForm: FileForm.TXT);
-
-
-    /// Component 추가
-    /// Task 사용하여 실행 도중에 추가가 진행될 수 있게끔 Thread를 조절
-    public void Add() => components.Add(Configuration());
-
-    /// Report가 추가된 Component 생성
-    public Component<T> Configuration()
-    {
-        
-        return new Component<T>();
-    }   
 
     /// Report 작성
     /// 양식 정할것
@@ -278,3 +271,4 @@ public class LoggerStream
         Directory.CreateDirectory(folder_FullPath);
     }
 }
+#endregion
